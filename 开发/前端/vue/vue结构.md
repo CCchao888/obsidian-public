@@ -163,6 +163,11 @@ npm run serve   # 或者 npm run dev
 
         
 2. **环境变量**
+  它是 **前端项目的环境变量配置文件**。
+
+- 当你运行 `npm run serve`（开发模式）时，Vue CLI 或 Vite 会自动加载这个文件里的变量。
+    
+- **变量只在构建时生效**（不会直接发给后端），而且必须以 `VUE_APP_`（Vue CLI）或 `VITE_`（Vite）开头。
     
     - `.env.development`
         
