@@ -1,4 +1,6 @@
 [shell语言](https://www.cnblogs.com/jingmoxukong/p/7867397.html)
+[The Linux Command Line 中文版](https://www.kancloud.cn/thinkphp/linux-command-line/39431)
+
 # 基本概念
 shell 就是命令解释器，命令来源有两种：用户手动输入 & GUI转换而来
 用户与计算机的交互无非两种方式，CLI 和 GUI。GUI的操作又分为两种情况，总共三种情况：**CLI 一定会经过 shell**，GUI **不一定经过 shell**，大多数 GUI 软件直接调用系统 API：
