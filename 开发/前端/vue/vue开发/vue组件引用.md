@@ -1,4 +1,5 @@
 
+# vue组件关系
 ---
 
 ## 1. Vue 组件依赖和数据传递方式
@@ -158,7 +159,7 @@ Vue 的合并策略大致是：
     
 
 
-
+# mixin
 ---
 
 ## 1. 谁是父组件？谁是子组件？
@@ -256,6 +257,102 @@ export default {
 - **mixin** = 装修工人。它把灯、电路、墙漆（逻辑）拷贝进房子，但它本身不是家具，也不会出现在房子里。
     
 
+
+
+
+# emit 事件上行
+
 ---
 
-要不要我给你画一个 **图**，用“组件树”展示父子关系，再用“代码注入”展示 mixin？这样你就能一眼看出两者的区别。
+## 1. `$emit` 是什么？
+
+- `$emit` 是 **子组件**用来向**父组件**发送事件的机制。
+    
+- 它的全称可以理解为 “emit an event”（发射一个事件）。
+    
+- 语法：
+    
+    ```js
+    this.$emit('事件名', 参数1, 参数2, ...)
+    ```
+    
+
+---
+
+## 2. 为什么需要 `$emit`？
+
+因为 Vue 的数据流是 **单向的（父 → 子）**：
+
+- 父组件 **通过 props** 给子组件传数据；
+    
+- 子组件 **不能直接修改父组件的数据**；
+    
+- 所以子组件如果想让父组件“知道点了按钮/发生了什么”，就用 `$emit` 通知父组件。
+    
+
+---
+
+## 3. 一个例子
+
+### 子组件 MyButton.vue
+
+```vue
+<template>
+  <button @click="$emit('click', 'hello from child')">
+    点我
+  </button>
+</template>
+```
+
+这里子组件没有直接调用父组件方法，而是发了一个 `"click"` 事件，并附带参数 `"hello from child"`。
+
+---
+
+### 父组件 App.vue
+
+```vue
+<template>
+  <div>
+    <MyButton @click="handleClick" />
+  </div>
+</template>
+
+<script>
+import MyButton from './MyButton.vue'
+
+export default {
+  components: { MyButton },
+  methods: {
+    handleClick(msg) {
+      console.log('父组件收到了:', msg)
+    }
+  }
+}
+</script>
+```
+
+运行结果：
+
+- 用户点击 `<MyButton>` 内的按钮；
+    
+- 子组件 `$emit('click', 'hello from child')`；
+    
+- 父组件绑定的 `@click="handleClick"` 被触发；
+    
+- 控制台打印：`父组件收到了: hello from child`。
+    
+
+---
+
+## 4. 总结
+
+- **props**：父 → 子，数据下行。
+    
+- **$emit**：子 → 父，事件上行。
+    
+- 它们构成了 Vue 最常见的通信方式：**单向数据流 + 事件回调**。
+    
+
+---
+
+要不要我帮你画一个「父组件 <-> 子组件（props / emit）」的流程图，让你直观记住？
