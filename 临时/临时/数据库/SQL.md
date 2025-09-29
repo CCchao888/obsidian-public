@@ -1,4 +1,5 @@
 
+## 优先级匹配
 ```
 SELECT *
 FROM warning_cfg
@@ -78,3 +79,31 @@ ORDER BY CASE
 LIMIT 1;
 
 ```
+
+## mybatius
+Java ↔ SQL 类型常见对应
+
+|数据库类型|Java 类型|jdbcType|
+|---|---|---|
+|INT / BIGINT|Integer / Long|INTEGER / BIGINT|
+|VARCHAR / CHAR|String|VARCHAR|
+|DECIMAL(15,0)|BigDecimal|DECIMAL|
+|DECIMAL(15,2)|BigDecimal|DECIMAL|
+|DATE|java.sql.Date / LocalDate|DATE|
+|DATETIME / TIMESTAMP|java.util.Date / LocalDateTime|TIMESTAMP|
+|TINYINT(1)|Boolean|BIT / TINYINT|
+
+> 💡 一般情况下不用显式写 `jdbcType`，MyBatis 会自动识别。  
+> 但如果允许字段值为 `null`，推荐加上 `jdbcType`，避免报错。
+
+| 数据库类型 (MySQL)            | JDBC Type     | Java 实体类类型                         | 备注          |
+| ------------------------ | ------------- | ---------------------------------- | ----------- |
+| `INT`                    | INTEGER       | `Integer` / `int`                  |             |
+| `BIGINT`                 | BIGINT        | `Long`                             |             |
+| `DECIMAL(15,0)`          | DECIMAL       | `BigDecimal`                       | 用于存钱、精度敏感的值 |
+| `VARCHAR`                | VARCHAR       | `String`                           |             |
+| `CHAR`                   | CHAR          | `String`                           |             |
+| `DATE`                   | DATE          | `java.util.Date` / `LocalDate`     | 只存年月日       |
+| `DATETIME`               | TIMESTAMP     | `java.util.Date` / `LocalDateTime` | 存日期+时间      |
+| `TIMESTAMP`              | TIMESTAMP     | `java.util.Date` / `LocalDateTime` | 存日期+时间      |
+| `BOOLEAN` / `TINYINT(1)` | BOOLEAN / BIT | `Boolean` / `Integer`              |             |
