@@ -62,3 +62,14 @@ Vue中有2种数据绑定的方式：
 	备注：
 	1.双向绑定一般都应用在表单类元素上（如：input、select等用户输入有value值的输入类元素）
 	2.v-model:value 可以简写为 v-model，因为v-model默认收集的就是`value`值。
+
+## 1.4 数据处理
+
+
+## 1.6 事件处理
+事件的基本使用：
+1. 使用v-on:xxx或I@xxx绑定事件，其中xxx是事件名；
+2. 事件的回调需要配置在methods对象中，最终会在vm上；
+3. methods中配置的函数，不要用箭头函数！否则this就不是vm了；
+4. methods中配置的函数，都是被Vue所管理的函数，this的指向是vm 或 组件实例对象；
+5. @click="demo" 和 @click="demo($event)" 效果一致，但后者可以传参;
