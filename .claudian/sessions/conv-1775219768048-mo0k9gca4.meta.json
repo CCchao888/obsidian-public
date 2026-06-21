@@ -1,0 +1,22 @@
+{
+  "id": "conv-1775219768048-mo0k9gca4",
+  "title": "Count current files",
+  "titleGenerationStatus": "success",
+  "createdAt": 1775219768051,
+  "updatedAt": 1781890774545,
+  "lastResponseAt": 1781890374854,
+  "sessionId": null,
+  "sdkSessionId": "aa824718-dbfd-45fc-9148-af990962fe6f",
+  "previousSdkSessionIds": [
+    "d40f3708-79b6-4180-8a63-e8da246513f5"
+  ],
+  "usage": {
+    "model": "deepseek-v4-pro[1m]",
+    "inputTokens": 130,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 19840,
+    "contextWindow": 1000000,
+    "contextTokens": 19970,
+    "percentage": 2
+  }
+}

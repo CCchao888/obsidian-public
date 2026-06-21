@@ -1,0 +1,19 @@
+{
+  "id": "conv-1781941444476-3ct4jce02",
+  "title": "Create knowledge graph and doc structure",
+  "titleGenerationStatus": "success",
+  "createdAt": 1781941444476,
+  "updatedAt": 1781942211945,
+  "lastResponseAt": 1781942211945,
+  "sessionId": "a59995e4-efb1-422b-b252-e823a683d8b0",
+  "sdkSessionId": "a59995e4-efb1-422b-b252-e823a683d8b0",
+  "usage": {
+    "model": "deepseek-v4-flash[1m]",
+    "inputTokens": 133,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 77440,
+    "contextWindow": 1000000,
+    "contextTokens": 77573,
+    "percentage": 8
+  }
+}
