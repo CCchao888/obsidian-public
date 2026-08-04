@@ -1,0 +1,20 @@
+{
+  "name": "codex-utils",
+  "interface": {
+    "displayName": "Codex Utils"
+  },
+  "plugins": [
+    {
+      "name": "codex-computer-use-pipe",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-computer-use-pipe"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "codex-computer-use-pipe",
+  "version": "0.1.0",
+  "description": "Desktop control via Computer Use named pipe + Chrome/Edge automation via CDP for sessions running non-OpenAI models (e.g. deepseek-v4-flash).",
+  "author": {
+    "name": "bytechao"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Computer Use + Browser CDP",
+    "shortDescription": "Desktop control (pipe) + browser dev-testing (CDP) for custom models.",
+    "longDescription": "Control Windows apps through the Computer Use named-pipe protocol and drive Chrome/Edge via CDP (navigate, click, type, read DOM, screenshots, console logs) when the built-in computer-use / browser MCP tools are unavailable in custom-model sessions.",
+    "developerName": "bytechao",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Use $codex-computer-use-pipe to control the desktop or drive the browser for dev self-testing."
+  }
+}

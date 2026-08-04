@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Computer Use + Browser CDP"
+  short_description: "Desktop control + browser dev-testing via CDP for custom models"
+  default_prompt: "Use $codex-computer-use-pipe to control the desktop or drive the browser for dev self-testing."
