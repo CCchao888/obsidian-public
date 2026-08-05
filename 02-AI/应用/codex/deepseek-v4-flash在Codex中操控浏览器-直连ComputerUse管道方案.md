@@ -2,6 +2,7 @@
 
 > 经验文档 · 2026-08-05 · 适用：Codex Desktop 26.727+，自定义模型（deepseek-v4-flash 等非官方模型）
 > 更新：v3 — 新增 CDP 点击/按文本点击（click-text）、eval-file、登录页工作流与实战案例（DeepSeek 用量/账单）
+> 更新：v4 — 新增“指定个人资料开标签/排查清单”（--profile-directory 引号坑、不同用户导致无资料、验证方法）
 
 ## 一、背景：问题是什么
 
@@ -110,14 +111,55 @@ node cdp-cli.mjs close
 ## 七、已知限制
 
 - **管道路径浏览器被拦**：Chrome/Edge 的窗口状态/截图会被 helper 的 URL 策略强制停止。浏览器请走 CDP。
-- **同一份 profile 不能开第二个窗口**：Chrome 运行时会锁住 User Data 目录，第二个进程指定同一目录只会把请求转给现有实例（调试端口开不起来）。复用已有登录态只能关掉 Chrome 重启并带调试端口（需用户确认），否则用临时 profile 让用户登录一次。
+- **同一份 profile 不能开第二个窗口，但可以开新标签**：Chrome 运行时会锁住 User Data 目录，第二个进程指定同一目录只会把请求转给现有实例（调试端口开不起来）。要在“现有窗口 + 指定资料”里开新标签，用 `chrome.exe --profile-directory="Profile 3" <url>`（见第八节，引号必须内嵌）。要调试端口只能关掉 Chrome 重启带参数（需确认），否则用临时 profile 让用户登录一次。
 - **会话级**：管道名每个会话重置，skill 会自动重新发现。CDP 端口由你启动，跨命令稳定。
 - **需要提权**：管道访问、启动浏览器、localhost CDP 连接都必须走提权 shell。
 - **自动批准**：管道客户端自动接受 Computer Use 批准请求；真正的门禁是 shell 提权审批。
 - **并发**：helper 串行处理请求；CDP 命令需唯一递增 id。
 - 无头模式截图是"看不见窗口"的真实渲染；要肉眼看就 `--headed`。
 
-## 八、排错速查
+## 八、指定个人资料：在现有窗口开标签 vs 开新窗口（2026-08-05 新验证）
+
+Chrome 的资料按文件夹存放：`%LOCALAPPDATA%\Google\Chrome\User Data` 下的 `Default`、`Profile 1`、`Profile 2`……显示名 → 文件夹的映射在 `Local State` → `profile.info_cache`；最准的是 `chrome://version` 里的 Profile 路径。
+
+在**指定资料**里打开网址（推荐，直接进现有窗口）：
+
+```powershell
+chrome.exe --profile-directory="Profile 3" https://www.douyin.com
+```
+
+要点：
+
+1. **引号必须内嵌**：值里有空格（`Profile 3`）。引号一旦丢失，参数被拆成 `--profile-directory=Profile` 和 `3`，Chrome 会用/新建一个字面名叫 `Profile` 的空资料 → 新窗口、没有任何个人资料。2026-08-05 实测：拆坏的启动真的在 User Data 里建出了 `Profile` 文件夹和 Local State 条目。
+2. **单实例路由**：Chrome 已在运行且是同一 Windows 用户时，网址会交给现有实例 → 在该资料对应的窗口里**开新标签**（不新开窗口）。该资料没有开窗口时才新开窗口（数据还是它自己的）。
+3. 想强制新窗口（仍用该资料）加 `--new-window`。
+4. **不带 `--profile-directory`**：交给现有实例，用当前活跃资料开标签（当天开抖音就是这条路）。
+5. **不同 Windows 用户 = 另一个 Chrome**：单实例和 User Data 都按用户隔离。启动侧是别的账户（沙箱用户/提权管理员）时，`chrome.exe <url>` 会起一个全新的空 Chrome → 新窗口、没有个人资料。
+
+skill 用法：
+
+```bash
+node cua-cli.mjs launch "C:\Program Files\Google\Chrome\Application\chrome.exe" '--profile-directory="Profile 3"' "https://www.douyin.com"
+```
+
+### 验证（别靠猜）
+
+1. 新标签里开 `chrome://version`，Profile 路径必须以 `...\Profile 3` 结尾（金标准）。
+2. 任务管理器：正确合并只增加渲染进程，浏览器主进程数和窗口数不变。
+3. 看 `User Data` 目录和 `Local State`：多了陌生 `Profile`/`Profile 2` 文件夹或条目 = 参数被拆或换了数据目录。
+4. `whoami` 对比启动侧账户和持有 Chrome 的账户。
+
+### 排查清单：新窗口且没有个人资料
+
+| # | 现象/检查点 | 原因 | 解决 |
+| --- | --- | --- | --- |
+| 1 | 新空白窗口；User Data 下多出 `Profile`/`Profile 2` 文件夹 | `--profile-directory` 空格处被拆（引号丢失） | 内嵌引号 `--profile-directory="Profile 3"`；PowerShell `Start-Process -ArgumentList` 里写 `'--profile-directory="Profile 3"'` |
+| 2 | 新 Chrome 一个资料都没有；Profile 路径指向别的用户 | 启动账户不同（沙箱/提权 vs 日常登录） | 用同一账户启动；`whoami` 双侧对比 |
+| 3 | 新 Chrome 空资料；命令行带 `--user-data-dir=<临时>` 或 CDP `--headed --profile <tempDir>` | 工具刻意隔离数据目录（开发/CDP 流程） | 个人浏览去掉 `--user-data-dir`；调试才用资料副本 |
+| 4 | 启动时 Chrome 没在运行，开默认资料新窗口 | 没有可路由的实例 | 先开 Chrome 再传网址（或接受新窗口） |
+| 5 | 资料开错（`Profile` 而不是 `Profile 3`） | 目录名拼写/大小写错误 | 从 `chrome://version` 或 `Local State` 抄准确名字 |
+
+## 九、排错速查
 
 | 错误/现象 | 原因 | 处理 |
 | --- | --- | --- |
@@ -128,8 +170,11 @@ node cdp-cli.mjs close
 | `launch` 后命令无输出/超时 | 用 spawn 启动 Chrome 挂在命令进程树上 | 已改为 `Start-Process` 分离启动；仍超时就挂载已运行的调试 Chrome |
 | CDP 连不上 | Chrome 未带 `--remote-debugging-port` 启动 | 用 `launch` 启动，或重启 Chrome 时加参数 |
 | 新窗口没有登录态 | 同一 profile 被运行中的 Chrome 锁住 | 关闭原 Chrome 重启带调试端口（需确认），或用临时 profile 登录 |
+| 新窗口空白且多出 `Profile` 文件夹 | `--profile-directory` 引号丢失被拆 | 内嵌引号（见第八节） |
+| 新 Chrome 没有任何个人资料 | 启动账户与日常登录不同（沙箱/提权） | 同账户启动，`whoami` 验证 |
+| 资料开错（`Profile` vs `Profile 3`） | 目录名拼错 | 从 `chrome://version` / `Local State` 抄名字 |
 
-## 九、相关文件
+## 十、相关文件
 
 - skill：`C:\Users\bytechao\.codex\skills\codex-computer-use-pipe\`（`SKILL.md`、`scripts/cua-*.mjs`、`scripts/cdp-*.mjs`、`references/protocol.md`、`references/browser-cdp.md`）
 - 上游 issue：[openai/codex#34039](https://github.com/openai/codex/issues/34039)

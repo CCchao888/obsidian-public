@@ -8,6 +8,9 @@
 - [Typing and clicking](#typing-and-clicking)
 - [Console and network](#console-and-network)
 - [Real-Chrome usage](#real-chrome-usage)
+- [Targeting a specific Chrome profile](#targeting-a-specific-chrome-profile)
+- [Verification: profile targeting](#verification-profile-targeting)
+- [Troubleshooting: new window with no personal profiles](#troubleshooting-new-window-with-no-personal-profiles)
 - [Pitfalls](#pitfalls)
 
 ## Why CDP
@@ -72,6 +75,47 @@ Console logs arrive as `Runtime.consoleAPICalled` events; collect them after `Ru
 - **Headed with a profile** (`--headed` + `--user-data-dir=<dir>`): visible, keeps logins/extensions. A running Chrome holds a lock on its User Data dir: a second process pointed at the same dir just forwards the request to the running instance (no debug port), so you cannot "open another window on the same profile". To reuse an existing login, close Chrome and relaunch it with `--remote-debugging-port` on the same user-data-dir (get user consent first). Otherwise use a temp profile and let the user sign in once.
 - **Attach instead of launch**: if Chrome is already running with `--remote-debugging-port`, just run the CLI commands without `launch`.
 - Local dev servers (`http://127.0.0.1:<port>`) work normally; `file://` URLs also work for static pages.
+
+## Targeting a specific Chrome profile
+
+Chrome keeps each profile in a folder under the User Data dir (`%LOCALAPPDATA%\Google\Chrome\User Data`): `Default`, `Profile 1`, `Profile 2`, ... The display-name to folder mapping lives in `Local State` -> `profile.info_cache`, or read the Profile Path on `chrome://version`.
+
+Open a URL in a specific profile:
+
+```powershell
+chrome.exe --profile-directory="Profile 3" https://www.douyin.com
+```
+
+Rules that matter:
+
+- **Quote the value.** `Profile 3` contains a space. If the quotes are lost, the argument is split into `--profile-directory=Profile` and `3`; Chrome then uses (or creates) a profile folder literally named `Profile` - an empty profile, so the new window has none of the user's data. Verified live: a mangled launch created a new `Profile` folder and a new `Local State` entry.
+- **Single-instance routing.** When Chrome is already running under the same OS user, the URL is handed to the existing instance and opens as a tab in that profile's window (no new window). If that profile has no open window, Chrome opens a new window for it, with its real data.
+- `--new-window` forces a new window for that profile.
+- **No `--profile-directory` at all**: the URL is routed to the running instance and opens a tab in the currently active profile.
+- **Different OS user = different Chrome.** The singleton and User Data dir are per Windows user. If the launcher runs as another account (sandbox user, elevated admin), `chrome.exe <url>` starts a fresh Chrome with an empty User Data dir -> new window, no personal profiles.
+
+With the cua CLI:
+
+```bash
+node scripts/cua-cli.mjs launch "C:\Program Files\Google\Chrome\Application\chrome.exe" '--profile-directory="Profile 3"' "https://www.douyin.com"
+```
+
+## Verification: profile targeting
+
+1. In the opened tab, open `chrome://version`; the **Profile Path** must end with the expected folder (`...\User Data\Profile 3`).
+2. Task Manager: a correct merge only adds renderer processes - the browser main-process count and window count stay the same.
+3. Inspect `%LOCALAPPDATA%\Google\Chrome\User Data` and `Local State`: any unexpected new `Profile`/`Profile 2` folder or entry is the signature of a mangled `--profile-directory` or a different user-data dir.
+4. Run `whoami` on the launching side and compare with the account that owns the running Chrome.
+
+## Troubleshooting: new window with no personal profiles
+
+| # | Symptom / check | Cause | Fix |
+|---|---|---|---|
+| 1 | New blank window; a stray `Profile` (or `Profile 2`) folder appears under User Data | `--profile-directory` value split at the space (quotes lost via shell / `Start-Process`) | Always embed quotes: `--profile-directory="Profile 3"`; in PowerShell `Start-Process -ArgumentList` write the element as `'--profile-directory="Profile 3"'` |
+| 2 | New Chrome has **no profiles at all**; Profile Path points under a different user | Launcher runs as a different Windows user (sandbox user / elevated admin vs the login that owns Chrome) | Launch from the same account as the user's Chrome; check `whoami` on both sides |
+| 3 | New Chrome, empty profile; command line contains `--user-data-dir=<temp>` or CDP `--headed --profile <tempDir>` | Tool intentionally uses an isolated data dir (dev/CDP flow) | For personal browsing drop `--user-data-dir`; only use a profile copy for debug instances |
+| 4 | New window in the default profile; Chrome was not running at launch time | No running instance to route to | Start Chrome first, then pass the URL (or accept the new window) |
+| 5 | Opens a profile but the wrong one (`Profile` instead of `Profile 3`) | Wrong folder name (spelling / case) | Copy the exact folder name from `chrome://version` -> Profile Path or `Local State` |
 
 ## Pitfalls
 
